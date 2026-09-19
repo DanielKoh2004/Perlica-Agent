@@ -55,6 +55,28 @@ const sourceFiles = [
   ...getAllFiles(path.join(ROOT_DIR, "packages", "contracts", "src")),
 ];
 
+// 0. Check root package.json for script pollution (Strict Monorepo Purity)
+const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8"));
+const ALLOWED_ROOT_SCRIPTS = new Set([
+  "dev",
+  "build",
+  "typecheck",
+  "test",
+  "verify:architecture",
+  "lint",
+  "format:check",
+  "format",
+]);
+for (const scriptName of Object.keys(rootPkg.scripts || {})) {
+  if (!ALLOWED_ROOT_SCRIPTS.has(scriptName)) {
+    reportViolation(
+      "AGENT.md §29/§30 - Root Manifest Purity",
+      `Root package.json must not contain package-specific tool script '${scriptName}'. Sub-app tools must remain isolated inside their own package.json. Invoke via 'npm --workspace=<pkg> run <cmd>'.`,
+      path.join(ROOT_DIR, "package.json")
+    );
+  }
+}
+
 // 1. Check for forbidden dumping-ground files (AGENT.md §37)
 for (const file of sourceFiles) {
   const baseName = path.basename(file);
