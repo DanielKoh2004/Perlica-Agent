@@ -54,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
             <img
               src="/perlica_chat_img.jpg"
               alt="Perlica"
-              className="w-full h-full object-cover object-[center_12%]"
+              className="w-full h-full object-cover object-center"
             />
           </div>
           <span className="font-semibold text-xs tracking-widest uppercase text-foreground/90">

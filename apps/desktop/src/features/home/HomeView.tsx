@@ -38,18 +38,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onSelectSuggestion }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto px-6 py-12 text-center select-none">
-      {/* Perlica character hero emblem */}
-      <div className="relative mb-5 group select-none">
-        <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-2 border-accent/40 shadow-xl bg-white/95 dark:bg-surface-secondary/80 p-1 backdrop-blur-md transition-transform group-hover:scale-105 duration-200">
-          <img
-            src="/perlica_home_page.jpg"
-            alt="Perlica"
-            className="w-full h-full object-contain rounded-2xl"
-          />
-        </div>
-        <div className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-accent text-accent-foreground border border-accent/40 shadow-sm">
-          Operator
-        </div>
+      {/* Floating Perlica hero character - transparent background, no box container, enlarged hero size */}
+      <div className="relative mb-3 group select-none flex items-center justify-center">
+        <img
+          src="/perlica_home_page.png"
+          alt="Perlica"
+          className="w-52 h-52 sm:w-64 sm:h-64 object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.18)] dark:drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out group-hover:scale-105 pointer-events-none"
+        />
       </div>
 
       {/* Greeting hierarchy as specified in Frontend.md */}
