@@ -1,15 +1,5 @@
 import React, { useState } from "react";
-import {
-  Sparkles,
-  Sun,
-  Moon,
-  Monitor,
-  PanelLeft,
-  PanelRight,
-  User,
-  Check,
-  X,
-} from "lucide-react";
+import { Sun, Moon, Monitor, PanelLeft, PanelRight, Check, X } from "lucide-react";
 import { useTheme } from "../../lib/theme/theme-context.js";
 import { useAgent } from "../../features/agent/agent-context.js";
 
@@ -59,14 +49,18 @@ export const Header: React.FC<HeaderProps> = ({
           <PanelLeft className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-1.5 ml-1">
-          <div className="w-5 h-5 rounded-md bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
-            <Sparkles className="w-3 h-3" />
+        <div className="flex items-center gap-2 ml-1">
+          <div className="w-6 h-6 rounded-md overflow-hidden border border-accent/40 flex items-center justify-center bg-surface shrink-0 ring-1 ring-accent/20">
+            <img
+              src="/perlica_chat_img.jpg"
+              alt="Perlica"
+              className="w-full h-full object-cover object-[center_12%]"
+            />
           </div>
           <span className="font-semibold text-xs tracking-widest uppercase text-foreground/90">
             Perlica
           </span>
-          <span className="text-[10px] text-muted-foreground/70 font-mono px-1 py-0.2 rounded bg-surface-secondary">
+          <span className="text-[10px] text-accent font-mono px-1.5 py-0.2 rounded bg-accent/10 border border-accent/20">
             v0.1
           </span>
         </div>
@@ -85,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
                 if (e.key === "Enter") handleSaveProfile();
                 if (e.key === "Escape") setEditingProfile(false);
               }}
-              className="w-24 bg-transparent text-xs text-foreground focus:outline-none"
+              className="w-28 bg-transparent text-xs text-foreground focus:outline-none"
               autoFocus
             />
             <button
@@ -109,10 +103,16 @@ export const Header: React.FC<HeaderProps> = ({
               setTempName(userProfile.name);
               setEditingProfile(true);
             }}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-surface-secondary transition-colors"
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-surface-secondary transition-colors"
             title="Click to edit your name"
           >
-            <User className="w-3.5 h-3.5" />
+            <div className="w-5 h-5 rounded-md overflow-hidden border border-border shrink-0">
+              <img
+                src="/endministrator_chat_img.jpg"
+                alt="Endministrator"
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
             <span className="font-medium text-foreground/90">{userProfile.name}</span>
           </button>
         )}

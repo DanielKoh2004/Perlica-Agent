@@ -1,7 +1,6 @@
 import React from "react";
 import { SuggestionCard, SuggestedAction } from "./SuggestionCard.js";
 import { useAgent } from "../agent/agent-context.js";
-import { Sparkles } from "lucide-react";
 
 const DEFAULT_SUGGESTIONS: SuggestedAction[] = [
   {
@@ -39,9 +38,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ onSelectSuggestion }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto px-6 py-12 text-center select-none">
-      {/* Brand pearl icon */}
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-accent/20 to-accent/5 border border-accent/30 flex items-center justify-center text-accent mb-6 shadow-sm">
-        <Sparkles className="w-6 h-6" />
+      {/* Perlica character hero emblem */}
+      <div className="relative mb-5 group select-none">
+        <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-2 border-accent/40 shadow-xl bg-white/95 dark:bg-surface-secondary/80 p-1 backdrop-blur-md transition-transform group-hover:scale-105 duration-200">
+          <img
+            src="/perlica_home_page.jpg"
+            alt="Perlica"
+            className="w-full h-full object-contain rounded-2xl"
+          />
+        </div>
+        <div className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-accent text-accent-foreground border border-accent/40 shadow-sm">
+          Operator
+        </div>
       </div>
 
       {/* Greeting hierarchy as specified in Frontend.md */}

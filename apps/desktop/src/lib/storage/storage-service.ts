@@ -47,7 +47,10 @@ export const StorageService = {
     } catch {
       // Fallback
     }
-    return { name: "Daniel" };
+    return {
+      name: "Endministrator",
+      avatarUrl: "/endministrator_chat_img.jpg",
+    };
   },
 
   setUserProfile(profile: UserProfile): void {
