@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --surface: 0 0% 100%;
+    --surface-secondary: 214 32% 95%;
+    --surface-elevated: 214 32% 92%;
+    --border: 214 32% 88%;
+    --input: 214 32% 88%;
+    --ring: 199 89% 44%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --muted: 210 40% 94%;
+    --muted-foreground: 215 16% 45%;
+    --accent: 199 89% 44%;
+    --accent-foreground: 0 0% 100%;
+    --accent-soft: 199 89% 44% / 0.1;
+    --accent-glow: 199 89% 44% / 0.2;
+    --success: 152 69% 40%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 152 69% 40% / 0.12;
+    --warning: 38 92% 48%;
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 38 92% 48% / 0.12;
+    --destructive: 0 84% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 84% 58% / 0.12;
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 224 45% 6%;
+    --foreground: 210 40% 98%;
+    --surface: 224 40% 9%;
+    --surface-secondary: 224 35% 13%;
+    --surface-elevated: 224 30% 17%;
+    --border: 224 25% 16%;
+    --input: 224 25% 16%;
+    --ring: 199 89% 52%;
+    --card: 224 40% 9%;
+    --card-foreground: 210 40% 98%;
+    --muted: 224 35% 12%;
+    --muted-foreground: 217 19% 62%;
+    --accent: 199 89% 52%;
+    --accent-foreground: 224 45% 6%;
+    --accent-soft: 199 89% 52% / 0.12;
+    --accent-glow: 199 89% 52% / 0.25;
+    --success: 152 69% 45%;
+    --success-foreground: 224 45% 6%;
+    --success-soft: 152 69% 45% / 0.15;
+    --warning: 38 92% 50%;
+    --warning-foreground: 224 45% 6%;
+    --warning-soft: 38 92% 50% / 0.15;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --destructive-soft: 0 84% 60% / 0.15;
+    --radius: 0.625rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Subtle custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
