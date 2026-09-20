@@ -8,7 +8,7 @@ interface AgentMessageProps {
 export const AgentMessage: React.FC<AgentMessageProps> = ({ message }) => {
   return (
     <div className="flex items-start gap-3 w-full animate-fade-in">
-      <div className="w-8 h-8 rounded-xl overflow-hidden border border-accent/40 bg-surface shadow-sm shrink-0 mt-0.5 select-none ring-1 ring-accent/20">
+      <div className="w-8 h-8 rounded-full overflow-hidden border border-accent/40 bg-surface shadow-sm shrink-0 mt-0.5 select-none ring-1 ring-accent/20">
         <img
           src="/perlica_chat_img.jpg"
           alt="Perlica"

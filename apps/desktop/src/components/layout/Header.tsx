@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <div className="flex items-center gap-2 ml-1">
-          <div className="w-6 h-6 rounded-md overflow-hidden border border-accent/40 flex items-center justify-center bg-surface shrink-0 ring-1 ring-accent/20">
+          <div className="w-6 h-6 rounded-full overflow-hidden border border-accent/40 flex items-center justify-center bg-surface shrink-0 ring-1 ring-accent/20">
             <img
               src="/perlica_chat_img.jpg"
               alt="Perlica"
@@ -106,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-surface-secondary transition-colors"
             title="Click to edit your name"
           >
-            <div className="w-5 h-5 rounded-md overflow-hidden border border-border shrink-0">
+            <div className="w-5 h-5 rounded-full overflow-hidden border border-border shrink-0">
               <img
                 src="/endministrator_chat_img.jpg"
                 alt="Endministrator"
