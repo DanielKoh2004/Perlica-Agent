@@ -1,10 +1,10 @@
-import { useAgent } from "../features/agent/agent-context.js";
+import { useAgentClientContext } from "../features/agent/client-context.js";
 import type { AgentClient } from "../features/agent/api/agent-client.js";
 
 /**
- * Hook providing access to the canonical AgentClient instance.
+ * Canonical hook providing the shared AgentClient transport.
  */
 export function useAgentClient(): AgentClient {
-  const { client } = useAgent();
+  const { client } = useAgentClientContext();
   return client;
 }

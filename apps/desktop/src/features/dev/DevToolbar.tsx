@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Terminal, ChevronDown, ChevronUp, Database, Play } from "lucide-react";
-import { useAgent } from "../agent/agent-context.js";
+import { useScenario } from "../agent/client-context.js";
+import { useConversation } from "../../hooks/useConversation.js";
 import { StorageService } from "../../lib/storage/storage-service.js";
 import type { MockScenarioType } from "../agent/api/agent-client.js";
 
@@ -18,7 +19,8 @@ export const DevToolbar: React.FC = () => {
   // Only render in dev builds
   if (!import.meta.env.DEV) return null;
 
-  const { selectedScenario, setSelectedScenario, sendMessage } = useAgent();
+  const { selectedScenario, setSelectedScenario } = useScenario();
+  const { sendMessage } = useConversation();
   const [collapsed, setCollapsed] = useState(true);
   const [demoMode, setDemoModeState] = useState(() => StorageService.getDemoMode());
 

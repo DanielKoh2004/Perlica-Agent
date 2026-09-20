@@ -1,4 +1,4 @@
-import { useAgent } from "../features/agent/agent-context.js";
+import { useSessionContext } from "../features/sessions/session-context.js";
 import type { Session } from "@perlica/contracts";
 
 export interface UseSessionsResult {
@@ -9,9 +9,9 @@ export interface UseSessionsResult {
 }
 
 /**
- * Hook providing session list access and lifecycle operations.
+ * Canonical hook providing session list access and lifecycle operations.
  */
 export function useSessions(): UseSessionsResult {
-  const { sessions, createSession, deleteSession, refreshSessions } = useAgent();
+  const { sessions, createSession, deleteSession, refreshSessions } = useSessionContext();
   return { sessions, createSession, deleteSession, refreshSessions };
 }

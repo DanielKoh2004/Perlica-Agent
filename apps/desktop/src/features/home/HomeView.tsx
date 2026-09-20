@@ -1,6 +1,6 @@
 import React from "react";
 import { SuggestionCard, SuggestedAction } from "./SuggestionCard.js";
-import { useAgent } from "../agent/agent-context.js";
+import { useUserProfile } from "../profile/profile-context.js";
 
 const DEFAULT_SUGGESTIONS: SuggestedAction[] = [
   {
@@ -34,7 +34,7 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ onSelectSuggestion }) => {
-  const { userProfile } = useAgent();
+  const { userProfile } = useUserProfile();
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto px-6 py-12 text-center select-none">

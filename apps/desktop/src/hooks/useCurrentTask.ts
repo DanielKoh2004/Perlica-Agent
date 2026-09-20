@@ -1,4 +1,4 @@
-import { useAgent } from "../features/agent/agent-context.js";
+import { useAgentRuntimeContext } from "../features/agent/agent-runtime-context.js";
 import type { Task } from "@perlica/contracts";
 import type { SessionState } from "../features/agent/state/agent-state.js";
 
@@ -11,7 +11,7 @@ export interface UseCurrentTaskResult {
 }
 
 /**
- * Hook providing access to ongoing task progress, verification state, and approvals.
+ * Canonical hook for observing ongoing task state, handling approvals, and cancellation.
  */
 export function useCurrentTask(): UseCurrentTaskResult {
   const {
@@ -20,7 +20,7 @@ export function useCurrentTask(): UseCurrentTaskResult {
     waitingApproval,
     resolveApproval,
     cancelCurrentTask,
-  } = useAgent();
+  } = useAgentRuntimeContext();
 
   return {
     currentTask,

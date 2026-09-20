@@ -1,15 +1,17 @@
-import { useAgent } from "../features/agent/agent-context.js";
+import { useAgentRuntimeContext } from "../features/agent/agent-runtime-context.js";
 import type { Message } from "@perlica/contracts";
+import type { SessionState } from "../features/agent/state/agent-state.js";
 
 export interface UseConversationResult {
   messages: Message[];
   sendMessage: (content: string) => Promise<void>;
+  agentStatus: SessionState["agentStatus"];
 }
 
 /**
- * Hook providing message history and sending capability for the active session.
+ * Canonical hook for reading conversation messages and sending user prompts.
  */
 export function useConversation(): UseConversationResult {
-  const { messages, sendMessage } = useAgent();
-  return { messages, sendMessage };
+  const { messages, sendMessage, agentStatus } = useAgentRuntimeContext();
+  return { messages, sendMessage, agentStatus };
 }
