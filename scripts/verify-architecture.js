@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import ts from "typescript";
 
 const ROOT_DIR = process.cwd();
 const FORBIDDEN_FILENAMES = new Set([
@@ -48,12 +49,22 @@ function getAllFiles(dir, fileList = []) {
   return fileList;
 }
 
-console.log("\x1b[36m>>> Checking Architecture Invariants (AGENT.md & Frontend.md)...\x1b[0m");
+console.log("\x1b[36m>>> Checking Architecture Invariants with TypeScript AST (AGENT.md & Frontend.md)...\x1b[0m");
 
 const sourceFiles = [
   ...getAllFiles(path.join(ROOT_DIR, "apps", "desktop", "src")),
   ...getAllFiles(path.join(ROOT_DIR, "packages", "contracts", "src")),
 ];
+
+// Helper: Parse source file into TypeScript AST
+function parseAST(filePath, content) {
+  return ts.createSourceFile(
+    path.basename(filePath),
+    content,
+    ts.ScriptTarget.Latest,
+    true
+  );
+}
 
 // 0. Check root package.json for script pollution (Strict Monorepo Purity)
 const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8"));
@@ -89,58 +100,7 @@ for (const file of sourceFiles) {
   }
 }
 
-// 2. Check for duplicate function and hook names (AGENT.md §32, §33, Frontend.md §38, §55, §56)
-const exportedFunctions = new Map(); // functionName -> filePath
-
-const EXPORT_FUNC_REGEX = /export\s+(?:async\s+)?function\s+([a-zA-Z0-9_]+)\s*\(/g;
-const EXPORT_CONST_FUNC_REGEX =
-  /export\s+const\s+([a-zA-Z0-9_]+)\s*[:=]\s*(?:<[^>]+>)?\s*(?:\([^)]*\)|[a-zA-Z0-9_]+)\s*=>/g;
-const EXPORT_COMPONENT_REGEX = /export\s+const\s+([A-Z][a-zA-Z0-9_]+)\s*:\s*React\.FC/g;
-
-for (const file of sourceFiles) {
-  if (file.endsWith(".test.ts") || file.endsWith(".test.tsx")) continue;
-
-  const content = fs.readFileSync(file, "utf8");
-
-  const matches = [
-    ...content.matchAll(EXPORT_FUNC_REGEX),
-    ...content.matchAll(EXPORT_CONST_FUNC_REGEX),
-    ...content.matchAll(EXPORT_COMPONENT_REGEX),
-  ];
-
-  for (const match of matches) {
-    const fnName = match[1];
-    if (exportedFunctions.has(fnName)) {
-      const existingFile = exportedFunctions.get(fnName);
-      reportViolation(
-        "AGENT.md §32/§33 & Frontend.md §55/§75 - Canonical Function Ownership",
-        `Duplicate canonical operation/component/hook '${fnName}' found. Already declared in ${path.relative(
-          ROOT_DIR,
-          existingFile
-        )}. Each function must have exactly one canonical owner.`,
-        file
-      );
-    } else {
-      exportedFunctions.set(fnName, file);
-    }
-  }
-}
-
-// 3. Syntax-aware check: useAgent() is deprecated and banned from components
-const USE_AGENT_IMPORT_REGEX = /import\s+\{[^}]*\buseAgent\b[^}]*\}\s+from\s+/;
-for (const file of sourceFiles) {
-  if (file.endsWith("agent-provider.tsx")) continue;
-  const content = fs.readFileSync(file, "utf8");
-  if (USE_AGENT_IMPORT_REGEX.test(content)) {
-    reportViolation(
-      "Frontend.md §38 & Architecture Refactoring §1 - Deprecated Facade Ban",
-      `Importing deprecated 'useAgent' is forbidden outside agent-provider.tsx. Use domain-specific hooks (useUserProfile, useScenario, useConversation, useCurrentTask, useSessions, useCurrentSession, useAgentClient).`,
-      file
-    );
-  }
-}
-
-// 4. Deterministic src/lib/ foundation allowlist
+// 2. Deterministic src/lib/ foundation allowlist
 const libDir = path.join(ROOT_DIR, "apps", "desktop", "src", "lib");
 if (fs.existsSync(libDir)) {
   const ALLOWED_LIB_ENTRIES = new Set(["cn.ts", "storage", "theme"]);
@@ -156,38 +116,7 @@ if (fs.existsSync(libDir)) {
   }
 }
 
-// 5. Contracts purity: data definitions only, zero behavioral functions/classes
-const CONTRACT_FORBIDDEN_EXPORT_FUNC = /export\s+(?:async\s+)?function\s+/;
-const CONTRACT_FORBIDDEN_EXPORT_ARROW =
-  /export\s+const\s+[a-zA-Z0-9_]+\s*=\s*(?:\([^)]*\)|[a-zA-Z0-9_]+)\s*=>/;
-const CONTRACT_FORBIDDEN_CLASS = /export\s+class\s+/;
-
-for (const file of sourceFiles) {
-  if (file.includes(path.join("packages", "contracts"))) {
-    if (file.endsWith(".test.ts")) continue;
-    const content = fs.readFileSync(file, "utf8");
-
-    if (
-      CONTRACT_FORBIDDEN_EXPORT_FUNC.test(content) ||
-      CONTRACT_FORBIDDEN_EXPORT_ARROW.test(content)
-    ) {
-      reportViolation(
-        "AGENT.md §30 - Contracts Purity",
-        "packages/contracts must only export data schemas and TypeScript types. Functions and behavioral execution logic are strictly prohibited in contracts.",
-        file
-      );
-    }
-    if (CONTRACT_FORBIDDEN_CLASS.test(content)) {
-      reportViolation(
-        "AGENT.md §30 - Contracts Purity",
-        "packages/contracts must not export classes. Contracts are data definitions only.",
-        file
-      );
-    }
-  }
-}
-
-// 6. React component / hook size thresholds (>200 lines warning, >350 lines failure)
+// 3. React component / hook size thresholds (>200 lines warning, >350 lines failure)
 for (const file of sourceFiles) {
   const isReactFile =
     file.endsWith(".tsx") || file.includes(path.join("src", "hooks"));
@@ -210,60 +139,189 @@ for (const file of sourceFiles) {
   }
 }
 
-// 7. Architectural dependency boundaries (AGENT.md §39, Frontend.md §52)
+// 4. AST-based checks: Canonical exports, useAgent import ban, contracts purity, import boundaries
+const declaredExportNames = new Map(); // exportName -> filePath
+
 for (const file of sourceFiles) {
   const content = fs.readFileSync(file, "utf8");
+  const sf = parseAST(file, content);
+
+  const isTestFile = file.endsWith(".test.ts") || file.endsWith(".test.tsx");
   const isContracts = file.includes(path.join("packages", "contracts"));
   const isComponent = file.includes(path.join("apps", "desktop", "src", "components"));
   const isFeature = file.includes(path.join("apps", "desktop", "src", "features"));
   const isLib = file.includes(path.join("apps", "desktop", "src", "lib"));
+  const isAgentProvider = file.endsWith("agent-provider.tsx");
 
-  // Contracts must never import from apps or relative paths outside contracts
-  if (isContracts) {
-    if (
-      content.includes("from \"../") ||
-      content.includes("from '@perlica/desktop'") ||
-      content.includes("from \"@perlica/desktop\"")
-    ) {
-      reportViolation(
-        "AGENT.md §30/§39 - Contracts Boundary",
-        "packages/contracts must remain dependency-light and must never import from apps or runtime implementations.",
-        file
-      );
+  for (const stmt of sf.statements) {
+    const isExported =
+      stmt.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword);
+
+    // A. Check for duplicate canonical function/component declarations
+    if (isExported && !isTestFile) {
+      if (ts.isFunctionDeclaration(stmt) && stmt.name) {
+        const fnName = stmt.name.text;
+        if (declaredExportNames.has(fnName)) {
+          const existingFile = declaredExportNames.get(fnName);
+          reportViolation(
+            "AGENT.md §32/§33 & Frontend.md §55/§75 - Canonical Function Ownership",
+            `Duplicate canonical operation/component/hook '${fnName}' declared. Already declared in ${path.relative(
+              ROOT_DIR,
+              existingFile
+            )}. Each function must have exactly one canonical owner.`,
+            file
+          );
+        } else {
+          declaredExportNames.set(fnName, file);
+        }
+      } else if (ts.isVariableStatement(stmt)) {
+        for (const decl of stmt.declarationList.declarations) {
+          if (ts.isIdentifier(decl.name)) {
+            const varName = decl.name.text;
+            // Check if variable is a function, arrow function, or React.FC
+            const isFn =
+              decl.initializer &&
+              (ts.isArrowFunction(decl.initializer) ||
+                ts.isFunctionExpression(decl.initializer));
+            const isComponentType =
+              decl.type && decl.type.getText(sf).includes("React.FC");
+
+            if (isFn || isComponentType) {
+              if (declaredExportNames.has(varName)) {
+                const existingFile = declaredExportNames.get(varName);
+                reportViolation(
+                  "AGENT.md §32/§33 & Frontend.md §55/§75 - Canonical Function Ownership",
+                  `Duplicate canonical operation/component/hook '${varName}' declared. Already declared in ${path.relative(
+                    ROOT_DIR,
+                    existingFile
+                  )}. Each function must have exactly one canonical owner.`,
+                  file
+                );
+              } else {
+                declaredExportNames.set(varName, file);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // B. Check contracts purity (no exported functions or classes)
+    if (isContracts && !isTestFile) {
+      if (isExported) {
+        if (ts.isFunctionDeclaration(stmt)) {
+          reportViolation(
+            "AGENT.md §30 - Contracts Purity",
+            `packages/contracts must only export data schemas and TypeScript types. Function declaration '${stmt.name?.text || "anonymous"}' is prohibited.`,
+            file
+          );
+        }
+        if (ts.isClassDeclaration(stmt)) {
+          reportViolation(
+            "AGENT.md §30 - Contracts Purity",
+            `packages/contracts must not export classes. Class '${stmt.name?.text || "anonymous"}' is prohibited.`,
+            file
+          );
+        }
+        if (ts.isVariableStatement(stmt)) {
+          for (const decl of stmt.declarationList.declarations) {
+            if (
+              decl.initializer &&
+              (ts.isArrowFunction(decl.initializer) ||
+                ts.isFunctionExpression(decl.initializer))
+            ) {
+              reportViolation(
+                "AGENT.md §30 - Contracts Purity",
+                `packages/contracts must not export behavioral functions. Function '${decl.name.getText(sf)}' is prohibited.`,
+                file
+              );
+            }
+          }
+        }
+      }
+    }
+
+    // C. Check imports: useAgent ban, contracts boundary, lib boundary, component mock boundary
+    if (ts.isImportDeclaration(stmt)) {
+      const modulePath = stmt.moduleSpecifier.text;
+
+      // Check useAgent import ban outside agent-provider.tsx
+      if (!isAgentProvider && stmt.importClause?.namedBindings) {
+        if (ts.isNamedImports(stmt.importClause.namedBindings)) {
+          for (const elem of stmt.importClause.namedBindings.elements) {
+            const importedName = elem.propertyName?.text || elem.name.text;
+            if (importedName === "useAgent") {
+              reportViolation(
+                "Frontend.md §38 & Architecture Refactoring §1 - Deprecated Facade Ban",
+                "Importing deprecated 'useAgent' is forbidden outside agent-provider.tsx. Use domain-specific hooks (useUserProfile, useScenario, useConversation, useCurrentTask, useSessions, useCurrentSession, useAgentClient).",
+                file
+              );
+            }
+          }
+        }
+      }
+
+      // Contracts must never import from apps or relative paths going outside contracts
+      if (isContracts) {
+        if (
+          modulePath.startsWith("../") ||
+          modulePath.includes("@perlica/desktop")
+        ) {
+          reportViolation(
+            "AGENT.md §30/§39 - Contracts Boundary",
+            `packages/contracts must remain dependency-light and must never import from apps or runtime implementations: '${modulePath}'.`,
+            file
+          );
+        }
+      }
+
+      // Foundations (src/lib) must never import from features or components
+      if (isLib) {
+        if (
+          modulePath.includes("/features/") ||
+          modulePath.includes("/components/") ||
+          modulePath.startsWith("@perlica/desktop/features") ||
+          modulePath.startsWith("@perlica/desktop/components")
+        ) {
+          reportViolation(
+            "AGENT.md §39 - Foundation Dependency Inversion",
+            `src/lib must remain domain-agnostic foundation primitives and must never import from features/ or components/: '${modulePath}'.`,
+            file
+          );
+        }
+      }
+
+      // UI components must not directly import mock implementation (must use hooks or context)
+      if (isComponent && !file.endsWith("DevToolbar.tsx")) {
+        if (
+          modulePath.includes("mock-agent-client") ||
+          modulePath.includes("MockAgentClient")
+        ) {
+          reportViolation(
+            "Frontend.md §42/§70 - Agent Transport Boundary",
+            `UI components must not directly import or instantiate MockAgentClient: '${modulePath}'. Use useAgentClient() or domain hooks instead.`,
+            file
+          );
+        }
+      }
     }
   }
 
-  // Foundations (src/lib) must never import from features or components
-  if (isLib) {
-    if (content.includes("/features/") || content.includes("/components/")) {
-      reportViolation(
-        "AGENT.md §39 - Foundation Dependency Inversion",
-        "src/lib must remain domain-agnostic foundation primitives and must never import from features/ or components/.",
-        file
-      );
-    }
-  }
-
-  // UI components must not directly import mock implementation (must use hooks or context)
-  if (isComponent && !file.endsWith("DevToolbar.tsx")) {
-    if (content.includes("mock-agent-client") || content.includes("MockAgentClient")) {
-      reportViolation(
-        "Frontend.md §42/§70 - Agent Transport Boundary",
-        "UI components must not directly import or instantiate MockAgentClient. Use useAgentClient() or domain hooks instead.",
-        file
-      );
-    }
-  }
-
-  // No direct localStorage in components or features (must use StorageService)
+  // D. Check for direct localStorage access outside StorageService using AST traversal
   if ((isComponent || isFeature) && !file.includes("storage-service.ts")) {
-    if (content.includes("localStorage.")) {
-      reportViolation(
-        "Frontend.md §51 - Storage Boundary",
-        "Direct localStorage access is forbidden outside StorageService. Use StorageService to preserve clean persistence boundaries.",
-        file
-      );
+    function visitNode(node) {
+      if (ts.isPropertyAccessExpression(node)) {
+        if (node.expression.getText(sf) === "localStorage") {
+          reportViolation(
+            "Frontend.md §51 - Storage Boundary",
+            "Direct localStorage access is forbidden outside StorageService. Use StorageService to preserve clean persistence boundaries.",
+            file
+          );
+        }
+      }
+      ts.forEachChild(node, visitNode);
     }
+    visitNode(sf);
   }
 }
 
@@ -274,7 +332,7 @@ if (violationCount > 0) {
   process.exit(1);
 } else {
   console.log(
-    `\x1b[32m✔ All architecture invariants verified successfully across ${sourceFiles.length} source files!\x1b[0m\n`
+    `\x1b[32m✔ All architecture invariants verified successfully via TypeScript AST across ${sourceFiles.length} source files!\x1b[0m\n`
   );
   process.exit(0);
 }
