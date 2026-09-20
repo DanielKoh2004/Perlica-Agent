@@ -251,28 +251,6 @@ export class MockEventStream {
       });
 
       this.emit(sessionId, {
-        id: `evt-${Date.now()}-act1`,
-        timestamp: new Date().toISOString(),
-        sessionId,
-        taskId: task.id,
-        type: "message.created",
-        message: {
-          id: `msg-${Date.now()}`,
-          sessionId,
-          taskId: task.id,
-          type: "activity",
-          content: "Retrieved relevant preferences and history",
-          createdAt: new Date().toISOString(),
-          activity: {
-            step: "Read relevant preferences",
-            status: "completed",
-            toolName: "memory.search_preferences",
-            durationMs: 400,
-          },
-        },
-      });
-
-      this.emit(sessionId, {
         id: `evt-${Date.now()}-up1`,
         timestamp: new Date().toISOString(),
         sessionId,
@@ -328,6 +306,7 @@ export class MockEventStream {
         sessionId,
         taskId: task.id,
         type: "verification.started",
+        verificationId: "verif-1",
         rule: "check_candidate_availability",
       });
     });
@@ -339,12 +318,14 @@ export class MockEventStream {
         sessionId,
         taskId: task.id,
         type: "verification.completed",
+        verificationId: "verif-1",
         result: {
           status: "passed",
           rule: "check_candidate_availability",
           expected: "Item is accessible in current region and library",
           observed: "Available in high definition",
           details: "Verification rule passed successfully.",
+          durationMs: 400,
           timestamp: new Date().toISOString(),
         },
       });
@@ -707,6 +688,7 @@ export class MockEventStream {
         sessionId,
         taskId: task.id,
         type: "verification.started",
+        verificationId: "verif-fail-1",
         rule: "verify_file_exists_on_disk",
       });
     });
@@ -718,6 +700,7 @@ export class MockEventStream {
         sessionId,
         taskId: task.id,
         type: "verification.completed",
+        verificationId: "verif-fail-1",
         result: {
           status: "failed",
           rule: "verify_file_exists_on_disk",
@@ -725,6 +708,7 @@ export class MockEventStream {
           observed: "Target path does not exist",
           details:
             "Verification rule failed: Independent check could not confirm output integrity.",
+          durationMs: 800,
           timestamp: new Date().toISOString(),
         },
       });

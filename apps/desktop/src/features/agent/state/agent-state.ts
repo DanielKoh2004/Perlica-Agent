@@ -68,6 +68,120 @@ export function reduceAgentEvent(state: SessionState, event: AgentEvent): Sessio
       };
     }
 
+    case "tool.started": {
+      const toolActivityMessage: Message = {
+        id: `msg-tool-${event.call.id}`,
+        sessionId: event.sessionId,
+        taskId: event.taskId,
+        type: "activity",
+        content: `Executing ${event.call.toolName}`,
+        createdAt: event.timestamp,
+        activity: {
+          step: event.call.toolName,
+          status: "running",
+          toolName: event.call.toolName,
+          toolCallId: event.call.id,
+        },
+      };
+
+      return {
+        ...state,
+        messages: [...state.messages, toolActivityMessage],
+      };
+    }
+
+    case "tool.completed": {
+      const existingIdx = state.messages.findIndex(
+        (m) => m.type === "activity" && m.activity?.toolCallId === event.result.callId
+      );
+
+      if (existingIdx === -1) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            `[AgentState] Dropping orphan tool.completed event: no matching in-flight activity found for callId '${event.result.callId}'`
+          );
+        }
+        return state;
+      }
+
+      const updatedMessages = [...state.messages];
+      const prevMsg = updatedMessages[existingIdx];
+      updatedMessages[existingIdx] = {
+        ...prevMsg,
+        content: event.result.success
+          ? `Completed ${prevMsg.activity?.toolName || "tool"}`
+          : `Failed ${prevMsg.activity?.toolName || "tool"}: ${event.result.error || "Execution error"}`,
+        activity: {
+          ...prevMsg.activity!,
+          status: event.result.success ? ("completed" as const) : ("failed" as const),
+          durationMs: event.result.durationMs,
+        },
+      };
+
+      return {
+        ...state,
+        messages: updatedMessages,
+      };
+    }
+
+    case "verification.started": {
+      const verifyActivityMessage: Message = {
+        id: `msg-verify-${event.verificationId}`,
+        sessionId: event.sessionId,
+        taskId: event.taskId,
+        type: "activity",
+        content: `Verify: ${event.rule}`,
+        createdAt: event.timestamp,
+        activity: {
+          step: `Verify: ${event.rule}`,
+          status: "running",
+          verificationId: event.verificationId,
+        },
+      };
+
+      return {
+        ...state,
+        messages: [...state.messages, verifyActivityMessage],
+      };
+    }
+
+    case "verification.completed": {
+      const existingIdx = state.messages.findIndex(
+        (m) =>
+          m.type === "activity" && m.activity?.verificationId === event.verificationId
+      );
+
+      if (existingIdx === -1) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            `[AgentState] Dropping orphan verification.completed event: no matching in-flight activity found for verificationId '${event.verificationId}'`
+          );
+        }
+        return state;
+      }
+
+      const updatedMessages = [...state.messages];
+      const prevMsg = updatedMessages[existingIdx];
+      const isPassed = event.result.status === "passed";
+
+      updatedMessages[existingIdx] = {
+        ...prevMsg,
+        content: isPassed
+          ? `Verified: ${event.result.rule}`
+          : `Verification failed for ${event.result.rule}: ${event.result.details || "Check failed"}`,
+        activity: {
+          ...prevMsg.activity!,
+          status: isPassed ? ("completed" as const) : ("failed" as const),
+          durationMs: event.result.durationMs,
+        },
+      };
+
+      return {
+        ...state,
+        messages: updatedMessages,
+      };
+    }
+
     case "approval.requested": {
       return {
         ...state,

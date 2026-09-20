@@ -7,6 +7,8 @@ import {
   VerificationResultSchema,
   ToolCallSchema,
   ToolResultSchema,
+  UserProfileSchema,
+  ThemeModeSchema,
 } from "./index.js";
 
 describe("Contracts Runtime Validation", () => {
@@ -123,5 +125,58 @@ describe("Contracts Runtime Validation", () => {
     };
     const parsed = VerificationResultSchema.parse(verification);
     expect(parsed.status).toBe("passed");
+  });
+
+  it("validates verification events with verificationId and durationMs", () => {
+    const started = {
+      id: "evt-v1",
+      timestamp: new Date().toISOString(),
+      sessionId: "session-1",
+      taskId: "task-1",
+      type: "verification.started",
+      verificationId: "verif-123",
+      rule: "integrity_check",
+    };
+    const parsedStarted = AgentEventSchema.parse(started);
+    expect(parsedStarted.type).toBe("verification.started");
+    if (parsedStarted.type === "verification.started") {
+      expect(parsedStarted.verificationId).toBe("verif-123");
+    }
+
+    const completed = {
+      id: "evt-v2",
+      timestamp: new Date().toISOString(),
+      sessionId: "session-1",
+      taskId: "task-1",
+      type: "verification.completed",
+      verificationId: "verif-123",
+      result: {
+        status: "passed",
+        rule: "integrity_check",
+        durationMs: 45,
+        timestamp: new Date().toISOString(),
+      },
+    };
+    const parsedCompleted = AgentEventSchema.parse(completed);
+    expect(parsedCompleted.type).toBe("verification.completed");
+    if (parsedCompleted.type === "verification.completed") {
+      expect(parsedCompleted.verificationId).toBe("verif-123");
+      expect(parsedCompleted.result.durationMs).toBe(45);
+    }
+  });
+
+  it("validates UserProfile and ThemeMode schemas", () => {
+    const validProfile = {
+      name: "Alice",
+      avatarUrl: "https://example.com/alice.png",
+    };
+    const parsedProfile = UserProfileSchema.parse(validProfile);
+    expect(parsedProfile.name).toBe("Alice");
+    expect(parsedProfile.avatarUrl).toBe("https://example.com/alice.png");
+
+    expect(ThemeModeSchema.parse("dark")).toBe("dark");
+    expect(ThemeModeSchema.parse("light")).toBe("light");
+    expect(ThemeModeSchema.parse("system")).toBe("system");
+    expect(() => ThemeModeSchema.parse("neon")).toThrow();
   });
 });

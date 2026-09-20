@@ -1,14 +1,15 @@
-export type ThemeMode = "dark" | "light" | "system";
+import {
+  UserProfileSchema,
+  UserProfile,
+  ThemeModeSchema,
+  ThemeMode,
+} from "@perlica/contracts";
 
-export interface UserProfile {
-  name: string;
-  avatarUrl?: string;
-}
+export type { UserProfile, ThemeMode };
 
 const STORAGE_KEYS = {
   THEME: "perlica_theme_mode",
   PROFILE: "perlica_user_profile",
-  SESSIONS: "perlica_sessions",
   ACTIVE_SESSION_ID: "perlica_active_session_id",
   DEMO_MODE: "perlica_demo_mode",
 } as const;
@@ -16,13 +17,15 @@ const STORAGE_KEYS = {
 /**
  * StorageService provides a centralized boundary for client-side persistence.
  * Prevents direct localStorage calls from leaking into UI components.
+ * Validates all persisted data across storage boundaries using @perlica/contracts.
  */
 export const StorageService = {
   getThemeMode(): ThemeMode {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.THEME);
-      if (saved === "dark" || saved === "light" || saved === "system") {
-        return saved;
+      const parsed = ThemeModeSchema.safeParse(saved);
+      if (parsed.success) {
+        return parsed.data;
       }
     } catch {
       // Fallback if localStorage is inaccessible
@@ -42,10 +45,14 @@ export const StorageService = {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.PROFILE);
       if (raw) {
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        const validated = UserProfileSchema.safeParse(parsed);
+        if (validated.success) {
+          return validated.data;
+        }
       }
     } catch {
-      // Fallback
+      // Fallback on invalid or corrupt storage data
     }
     return {
       name: "Endministrator",

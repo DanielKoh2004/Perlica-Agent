@@ -56,12 +56,14 @@ export type ToolCompletedEvent = z.infer<typeof ToolCompletedEventSchema>;
 
 export const VerificationStartedEventSchema = BaseEventSchema.extend({
   type: z.literal("verification.started"),
+  verificationId: z.string().min(1),
   rule: z.string().min(1),
 });
 export type VerificationStartedEvent = z.infer<typeof VerificationStartedEventSchema>;
 
 export const VerificationCompletedEventSchema = BaseEventSchema.extend({
   type: z.literal("verification.completed"),
+  verificationId: z.string().min(1),
   result: VerificationResultSchema,
 });
 export type VerificationCompletedEvent = z.infer<typeof VerificationCompletedEventSchema>;

@@ -14,6 +14,7 @@ export const VerificationResultSchema = z.object({
   expected: z.string().optional(),
   observed: z.string().optional(),
   details: z.string().optional(),
+  durationMs: z.number().nonnegative().optional(),
   timestamp: z.string().datetime().or(z.string().min(1)),
 });
 export type VerificationResult = z.infer<typeof VerificationResultSchema>;

@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Perlica - Personal AI Agent Desktop Harness",
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=@perlica/desktop",

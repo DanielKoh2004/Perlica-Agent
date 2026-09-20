@@ -41,6 +41,8 @@ export const ActivityDetailsSchema = z.object({
   step: z.string().min(1),
   status: z.enum(["running", "completed", "failed"]).default("completed"),
   toolName: z.string().optional(),
+  toolCallId: z.string().optional(),
+  verificationId: z.string().optional(),
   durationMs: z.number().nonnegative().optional(),
 });
 export type ActivityDetails = z.infer<typeof ActivityDetailsSchema>;
